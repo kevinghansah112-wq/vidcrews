@@ -162,7 +162,7 @@ export default function AdminPanel({ go }) {
                           </div>
                         </td>
                         <td style={{ color: 'var(--text-2)' }}>{u.user_type}</td>
-                        <td style={{ color: 'var(--text-3)' }}>{u.role || '—'}</td>
+                        <td style={{ color: 'var(--text-3)' }}>{u.role || '-'}</td>
                         <td style={{ color: 'var(--text-3)' }}>{u.city}</td>
                         <td><span className={b.cls}>{b.label}</span></td>
                         <td onClick={e => e.stopPropagation()}>

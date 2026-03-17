@@ -155,7 +155,7 @@ export default function AuthPage({ go }) {
   // Step 1: account details
   if (step === 1) return (
     <div style={{ maxWidth: 400, margin: '40px auto', padding: '0 8px' }}>
-      <div className="pg">Step 1 of {form.user_type === 'creative' ? 3 : 2} — Account</div>
+      <div className="pg">Step 1 of {form.user_type === 'creative' ? 3 : 2} - Account</div>
       <h2 style={{ fontSize: 20, marginBottom: 4 }}>Create your account</h2>
       <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 24 }}>Pick a username and password.</p>
       <div className="col">
@@ -193,7 +193,7 @@ export default function AuthPage({ go }) {
   // Step 2: location + role (for creatives) or location only (for clients)
   if (step === 2) return (
     <div style={{ maxWidth: 400, margin: '40px auto', padding: '0 8px' }}>
-      <div className="pg">Step 2 of {form.user_type === 'creative' ? 3 : 2} — {form.user_type === 'creative' ? 'Your Profile' : 'Location'}</div>
+      <div className="pg">Step 2 of {form.user_type === 'creative' ? 3 : 2} - {form.user_type === 'creative' ? 'Your Profile' : 'Location'}</div>
       <h2 style={{ fontSize: 20, marginBottom: 4 }}>{form.user_type === 'creative' ? 'Tell us about yourself' : 'Where are you based?'}</h2>
       <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 24 }}>
         {form.user_type === 'creative' ? 'This is how clients discover you.' : 'This helps us show you nearby creatives.'}
@@ -250,7 +250,7 @@ export default function AuthPage({ go }) {
   // Step 3: equipment (creatives only)
   return (
     <div style={{ maxWidth: 400, margin: '40px auto', padding: '0 8px' }}>
-      <div className="pg">Step 3 of 3 — Equipment</div>
+      <div className="pg">Step 3 of 3 - Equipment</div>
       <h2 style={{ fontSize: 20, marginBottom: 4 }}>What gear do you have?</h2>
       <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 24 }}>Let clients know what you bring to the shoot.</p>
       <div className="col">

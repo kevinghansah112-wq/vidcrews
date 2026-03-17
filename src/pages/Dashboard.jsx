@@ -65,7 +65,7 @@ export default function Dashboard({ go }) {
     } finally { setSaving(false) }
   }
 
-  const fmt = (d) => d ? new Date(d).toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+  const fmt = (d) => d ? new Date(d).toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'
 
   return (
     <div>
