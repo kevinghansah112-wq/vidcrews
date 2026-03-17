@@ -54,11 +54,16 @@ export default function Profile({ go }) {
     const file = e.target.files[0]
     if (!file) return
     setUploading(true)
+    setError(null)
     try {
       const url = await uploadAvatar(profile.id, file)
       await updateProfile(profile.id, { avatar_url: url })
       await refreshProfile()
-    } catch (err) { setError(err.message) }
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) { 
+      setError('Upload failed: ' + err.message) 
+    }
     finally { setUploading(false) }
   }
 
