@@ -235,3 +235,47 @@ tr:hover td { background: var(--surface-2); }
   main { padding: 20px 16px 80px; }
   .drawer { width: 100%; }
 }
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .nav {
+    padding: 0 12px;
+    height: 48px;
+    overflow-x: auto;
+  }
+  .nav-links {
+    gap: 2px;
+  }
+  .nav-logo {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .btn-g {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+  main {
+    padding: 16px 12px 80px;
+  }
+  .ga {
+    grid-template-columns: 1fr;
+  }
+  .g2, .g3, .g4 {
+    grid-template-columns: 1fr;
+  }
+  .drawer {
+    width: 100%;
+    padding: 20px 16px;
+  }
+  .stat-card {
+    padding: 12px;
+  }
+  .stat-v {
+    font-size: 18px;
+  }
+  table {
+    font-size: 12px;
+  }
+  td, th {
+    padding: 8px 6px;
+  }
+}
