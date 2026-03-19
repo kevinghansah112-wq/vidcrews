@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { getCreativesNearCity, getEquipment, getReviews, addReview, reportUser, toggleShortlist, getShortlist, sendMessage } from '../lib/supabase'
+import { getCreativesNearCity, getEquipment, toggleShortlist, getShortlist, reportUser } from '../lib/supabase'
 import { getCurrencySymbol, REPORT_REASONS } from '../lib/constants'
 export default function Browse({ location, go }) {
   const { profile } = useAuth()
@@ -10,15 +10,8 @@ export default function Browse({ location, go }) {
   const [availF, setAvailF] = useState('All')
   const [selected, setSelected] = useState(null)
   const [selEquip, setSelEquip] = useState([])
-  const [selReviews, setSelReviews] = useState([])
   const [shortlist, setShortlist] = useState([])
   const [reportOpen, setReportOpen] = useState(false)
-  const [reviewOpen, setReviewOpen] = useState(false)
-  const [messageOpen, setMessageOpen] = useState(false)
-  const [messageDraft, setMessageDraft] = useState('')
-  const [messageSent, setMessageSent] = useState(false)
-  const [reviewRating, setReviewRating] = useState(5)
-  const [reviewComment, setReviewComment] = useState('')
   const [reportReason, setReportReason] = useState(REPORT_REASONS[0])
   const [reportDetails, setReportDetails] = useState('')
   const [actionMsg, setActionMsg] = useState(null)
@@ -34,15 +27,9 @@ export default function Browse({ location, go }) {
   const openProfile = async (p) => {
     setSelected(p)
     setSelEquip([])
-    setSelReviews([])
     setReportOpen(false)
-    setReviewOpen(false)
-    setMessageOpen(false)
-    setMessageDraft('')
-    setMessageSent(false)
-    const [eq, rv] = await Promise.all([getEquipment(p.id), getReviews(p.id)])
+    const eq = await getEquipment(p.id)
     setSelEquip(eq)
-    setSelReviews(rv)
   }
   const roles = ['All', ...new Set(crew.map(u => u.role).filter(Boolean))]
   const list = crew.filter(u => {
@@ -50,7 +37,6 @@ export default function Browse({ location, go }) {
     if (availF !== 'All' && u.availability !== availF) return false
     return true
   })
-  const avgRating = (reviews) => reviews.length ? (reviews.reduce((a, r) => a + r.rating, 0) / reviews.length).toFixed(1) : null
   const sym = (p) => getCurrencySymbol(p?.currency)
   const handleSave = async (id) => {
     if (!profile) { go('auth'); return }
@@ -58,35 +44,23 @@ export default function Browse({ location, go }) {
     await toggleShortlist(profile.id, id, isSaved)
     setShortlist(s => isSaved ? s.filter(x => x !== id) : [...s, id])
   }
-  const handleReview = async () => {
-    if (!profile || !selected) return
-    await addReview(selected.id, profile.id, reviewRating, reviewComment)
-    const reviews = await getReviews(selected.id)
-    setSelReviews(reviews)
-    setReviewOpen(false)
-    setReviewComment('')
-    setActionMsg('Review submitted! +10 points awarded to ' + selected.username)
-    setTimeout(() => setActionMsg(null), 3000)
-  }
   const handleReport = async () => {
     if (!profile || !selected) return
     await reportUser(profile.id, selected.id, reportReason, reportDetails)
     setReportOpen(false)
     setReportDetails('')
-    setActionMsg('Report submitted. Our team will review it.')
+    setActionMsg('Report submitted.')
     setTimeout(() => setActionMsg(null), 3000)
   }
-  const handleSendMessage = async () => {
-    if (!profile || !selected || !messageDraft.trim()) return
-    try {
-      await sendMessage(profile.id, selected.id, messageDraft.trim())
-      setMessageSent(true)
-      setMessageDraft('')
-      setActionMsg('Message sent to @' + selected.username + '!')
+  const handleWhatsApp = (p) => {
+    const phone = p.phone ? p.phone.replace(/[^0-9]/g, '') : null
+    if (!phone) {
+      setActionMsg('This creative has not added a phone number yet.')
       setTimeout(() => setActionMsg(null), 3000)
-    } catch (err) {
-      setActionMsg('Failed to send message. Try again.')
+      return
     }
+    const msg = encodeURIComponent('Hi ' + (p.full_name || p.username) + ', I found you on VidCrews and would like to work with you.')
+    window.open('https://wa.me/' + phone + '?text=' + msg, '_blank')
   }
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
@@ -187,6 +161,11 @@ export default function Browse({ location, go }) {
                   <div className="stat-l">Availability</div>
                 </div>
               </div>
+              {selected.points > 0 && (
+                <div style={{ background: 'var(--yellow-bg)', border: '1px solid var(--yellow)', borderRadius: 8, padding: '8px 12px', marginBottom: 14, fontSize: 12, color: 'var(--yellow)', fontWeight: 600 }}>
+                  {selected.points} points earned
+                </div>
+              )}
               <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.7, marginBottom: 14 }}>{selected.bio || 'No bio yet.'}</p>
               {selEquip.length > 0 && (
                 <div style={{ marginBottom: 14 }}>
@@ -196,98 +175,32 @@ export default function Browse({ location, go }) {
                   </div>
                 </div>
               )}
+              {selected.instagram && (
+                <a href={'https://instagram.com/' + selected.instagram.replace('@','')} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', textDecoration: 'none', marginBottom: 10 }}>
+                  Instagram: @{selected.instagram.replace('@','')}
+                </a>
+              )}
+              {selected.website && (
+                <a href={selected.website} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', textDecoration: 'none', marginBottom: 10 }}>
+                  Portfolio / Website
+                </a>
+              )}
               {selected.calendly_url && (
-                <div style={{ marginBottom: 14 }}>
-                  <a href={selected.calendly_url} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'block', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', textDecoration: 'none' }}>
-                    View Calendly Availability
-                  </a>
-                </div>
+                <a href={selected.calendly_url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', textDecoration: 'none', marginBottom: 14 }}>
+                  View Calendly Availability
+                </a>
               )}
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <div className="lbl" style={{ margin: 0 }}>Reviews ({selReviews.length})</div>
-                  {avgRating(selReviews) && <span style={{ fontSize: 13, fontWeight: 600 }}>Avg: {avgRating(selReviews)}</span>}
-                </div>
-                {selReviews.slice(0, 3).map(r => (
-                  <div key={r.id} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '10px 12px', marginBottom: 8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600 }}>@{r.reviewer?.username}</span>
-                      <span style={{ fontSize: 12 }}>{r.rating}/5</span>
-                    </div>
-                    {r.comment && <div style={{ fontSize: 12, color: 'var(--text-2)' }}>{r.comment}</div>}
-                  </div>
-                ))}
-              </div>
-              {profile && profile.id !== selected.id && reviewOpen && (
-                <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: 14, marginBottom: 14 }}>
-                  <div style={{ marginBottom: 10 }}>
-                    <div className="lbl">Rating</div>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {[1,2,3,4,5].map(s => (
-                        <span key={s} onClick={() => setReviewRating(s)}
-                          style={{ fontSize: 20, cursor: 'pointer', color: s <= reviewRating ? 'var(--yellow)' : 'var(--border-strong)' }}>*</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ marginBottom: 10 }}>
-                    <div className="lbl">Comment</div>
-                    <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)} placeholder="Share your experience..." style={{ height: 70 }} />
-                  </div>
-                  <div className="row" style={{ gap: 8 }}>
-                    <button className="btn-s btn-sm" onClick={() => setReviewOpen(false)}>Cancel</button>
-                    <button className="btn btn-sm" onClick={handleReview}>Submit</button>
-                  </div>
-                </div>
-              )}
-              {profile && profile.id !== selected.id && messageOpen && (
-                <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: 14, marginBottom: 14 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10 }}>Message @{selected.username}</div>
-                  {messageSent ? (
-                    <div className="ok-box">Message sent!</div>
-                  ) : (
-                    <div>
-                      <textarea value={messageDraft} onChange={e => setMessageDraft(e.target.value)}
-                        placeholder="Type your message..."
-                        style={{ height: 90, marginBottom: 10 }} />
-                      <div className="row" style={{ gap: 8 }}>
-                        <button className="btn-s btn-sm" onClick={() => setMessageOpen(false)}>Cancel</button>
-                        <button className="btn btn-sm" onClick={handleSendMessage}>Send</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-              {profile && profile.id !== selected.id && reportOpen && (
-                <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red)', borderRadius: 8, padding: 14, marginBottom: 14 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--red)', marginBottom: 10 }}>Report @{selected.username}</div>
-                  <div style={{ marginBottom: 10 }}>
-                    <select className="fsel" value={reportReason} onChange={e => setReportReason(e.target.value)}>
-                      {REPORT_REASONS.map(r => <option key={r}>{r}</option>)}
-                    </select>
-                  </div>
-                  <div style={{ marginBottom: 10 }}>
-                    <textarea value={reportDetails} onChange={e => setReportDetails(e.target.value)} placeholder="Details..." style={{ height: 70 }} />
-                  </div>
-                  <div className="row" style={{ gap: 8 }}>
-                    <button className="btn-s btn-sm" onClick={() => setReportOpen(false)}>Cancel</button>
-                    <button className="btn-danger btn-sm" onClick={handleReport}>Report</button>
-                  </div>
-                </div>
-              )}
-              <div className="col">
+              <hr className="divider" />
+              <div className="col" style={{ marginTop: 14 }}>
                 {profile ? (
                   <div>
-                    {!messageOpen && !messageSent && profile.id !== selected.id && (
-                      <button className="btn" style={{ padding: 10, width: '100%', marginBottom: 8 }} onClick={() => setMessageOpen(true)}>
-                        Send Message
-                      </button>
-                    )}
-                    {!reviewOpen && profile.id !== selected.id && (
-                      <button className="btn-s" style={{ padding: 9, width: '100%', marginBottom: 8 }} onClick={() => setReviewOpen(true)}>
-                        Leave a Review
-                      </button>
-                    )}
+                    <button className="btn" style={{ padding: 10, width: '100%', marginBottom: 8, background: '#25d366' }}
+                      onClick={() => handleWhatsApp(selected)}>
+                      WhatsApp
+                    </button>
                     <button className="btn-s" style={{ padding: 9, width: '100%', marginBottom: 8 }} onClick={() => handleSave(selected.id)}>
                       {shortlist.includes(selected.id) ? 'Saved' : 'Save to Shortlist'}
                     </button>
@@ -302,6 +215,23 @@ export default function Browse({ location, go }) {
                   <button className="btn" onClick={() => { setSelected(null); go('auth') }} style={{ padding: 10, width: '100%' }}>
                     Sign up to Connect
                   </button>
+                )}
+                {reportOpen && profile && profile.id !== selected.id && (
+                  <div style={{ background: 'var(--red-bg)', border: '1px solid var(--red)', borderRadius: 8, padding: 14, marginTop: 8 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--red)', marginBottom: 10 }}>Report @{selected.username}</div>
+                    <div style={{ marginBottom: 10 }}>
+                      <select className="fsel" value={reportReason} onChange={e => setReportReason(e.target.value)}>
+                        {REPORT_REASONS.map(r => <option key={r}>{r}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ marginBottom: 10 }}>
+                      <textarea value={reportDetails} onChange={e => setReportDetails(e.target.value)} placeholder="Details..." style={{ height: 70 }} />
+                    </div>
+                    <div className="row" style={{ gap: 8 }}>
+                      <button className="btn-s btn-sm" onClick={() => setReportOpen(false)}>Cancel</button>
+                      <button className="btn-danger btn-sm" onClick={handleReport}>Submit</button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
