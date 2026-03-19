@@ -134,7 +134,7 @@ export default function Messages({ go }) {
               {activeMessages.map(m => {
                 const isMine = m.sender_id === profile.id
                 return (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', flexdirection: 'row' }}>
+                  <div key={m.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', flexDirection: 'row' }}>
                     <div className={isMine ? 'chat-bubble-me' : 'chat-bubble-ai'}>
                       <div>{m.body}</div>
                       <div style={{ fontSize: 10, marginTop: 3, opacity: 0.5, textAlign: 'right' }}>{fmt(m.created_at)}</div>
